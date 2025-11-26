@@ -61,6 +61,7 @@ public class OmokClient extends JFrame {
     private ChancePanel chancePanel;
     private JPanel sidePanel;
     JButton reStartButton;
+    JButton endButton;
     
     private Point[][] points = new Point[SIZE][SIZE];
 
@@ -117,9 +118,15 @@ public class OmokClient extends JFrame {
             }
         });
         
+        // 다시하기 버튼
         reStartButton = new JButton("다시하기");
         reStartButton.addActionListener(e -> {
         	sendToServer("RESET");
+        });
+        // 종료하기 버튼
+        endButton = new JButton("종료하기");
+        endButton.addActionListener(e -> {
+        	sendToServer("END");
         });
         
         // 전체 레이아웃 구성
@@ -137,12 +144,6 @@ public class OmokClient extends JFrame {
     // 메시지 전송
     private void sendToServer(String msg) {
     	out.println(msg);
-        /*try {
-            if (out != null)
-            	out.println(msg);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
     }
     
     private void connectToServer(String host, int port) {
@@ -242,6 +243,7 @@ public class OmokClient extends JFrame {
                     String winner = parts[1];
                     JOptionPane.showMessageDialog(this, (winner.equals("B") ? "흑 승리!" : "백 승리!"));
                     sidePanel.add(reStartButton);
+                    sidePanel.add(endButton);
                     showAll = true;
                     sidePanel.revalidate();   // 레이아웃 재계산
                     repaint();
