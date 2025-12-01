@@ -94,7 +94,7 @@ public class OmokServer {
         public void run() {
             try {
                 String line;
-                while (!gameOver && (line = in.readLine()) != null) {
+                while ((line = in.readLine()) != null) {
                     handleMessage(this, line.trim());
                 }
             } catch (IOException e) {
@@ -128,7 +128,9 @@ public class OmokServer {
         else if (msg.equals("RESET")) {
             resetGame();
         }
-
+        else if (msg.equals("END")) {
+            handleEnd(p);
+        }
         else {
             p.send("ERROR UnknownCommand");
         }
@@ -202,6 +204,22 @@ public class OmokServer {
         turn = (turn == 'B') ? 'W' : 'B';
         broadcast("TURN " + turn);
     }
+    private void handleEnd(Player p) {
+        System.out.println("[SERVER] Player requested END");
+
+        // 모든 클라이언트에게 종료 알림
+        broadcast("END");
+
+        try {
+            if (blackPlayer != null && blackPlayer.socket != null)
+                blackPlayer.socket.close();
+            if (whitePlayer != null && whitePlayer.socket != null)
+                whitePlayer.socket.close();
+        } catch (IOException e) { }
+
+        System.out.println("[SERVER] Game terminated.");
+        System.exit(0); // 서버 종료
+    }
 
     // -----------------------------------------------------------------------
     // 금수 전송 (BAN r c)
@@ -251,47 +269,38 @@ public class OmokServer {
 
         System.out.println("[SERVER] Resetting game...");
 
-        //  보드 초기화
+        // 보드 초기화
         for (int r = 0; r < SIZE; r++)
-            for (int c = 0; c < SIZE; c++)
+            for (int c = 0; c < SIZE; c++) {
                 board[r][c] = null;
-
-        //  금수 초기화
-        for (int r = 0; r < SIZE; r++)
-            for (int c = 0; c < SIZE; c++)
                 isBan[r][c] = false;
+            }
 
-        //  생명 초기화
+        // 상태 초기화
         lifeBlack = MAX_LIFE;
         lifeWhite = MAX_LIFE;
-
-        //  chance 초기화
         chanceBlack = MAX_CHANCE;
         chanceWhite = MAX_CHANCE;
 
-        //  턴 초기화 (흑 먼저)
-        turn = 'B';
-
-        //  게임 오버 상태 초기화
+        turn = 'B'; 
         gameOver = false;
 
-        //  금수 다시 계산
         updateBanPositions();
 
+        // ✔ RESET 먼저 보내기
+        broadcast("RESET");
 
-        // 기본 상태 재전송
+        // ✔ RESET 이후에 새 상태 보내기
         broadcast("TURN B");
         broadcast("LIFE B " + lifeBlack);
         broadcast("LIFE W " + lifeWhite);
         broadcast("CHANCES B " + chanceBlack);
         broadcast("CHANCES W " + chanceWhite);
 
-        //  금수 재전송
+        // 금수 재전송
         sendBanPositions();
-        
-        // 클라이언트에게 RESET 알림
-        broadcast("RESET");
     }
+
     
 
     // -----------------------------------------------------------------------

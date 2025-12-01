@@ -251,6 +251,10 @@ public class OmokClient extends JFrame {
                 case "RESET":
                     resetLocalBoard();
                     break;
+                case "END":
+                    JOptionPane.showMessageDialog(this, "게임이 종료되었습니다.");
+                    System.exit(0);
+                    break;
                 default:
                     System.out.println("Unknown server msg: " + msg);
             }
@@ -262,13 +266,24 @@ public class OmokClient extends JFrame {
                 board[i][j] = null;
                 isBan[i][j] = false;
             }
-        lastRowB = -1; lastColB = -1;
-        lastRowW = -1; lastColW = -1;
+
+        lastRowB = -1;
+        lastColB = -1;
+        lastRowW = -1;
+        lastColW = -1;
+
         showAll = false;
+
+        // 리셋 후에도 계속 게임할 수 있도록 설정
+        isAssigned = true;     // 플레이어 역할 유지시키기
+        isMyTurn = false;      // 서버에서 TURN 메시지 받을 때 true됨
+
+        // UI 갱신
         lifePanel.updateLives(blackLives, whiteLives);
         chancePanel.updateChances(isMyBlack, blackChances, whiteChances);
         repaint();
     }
+
 
     // 내부 패널
     class BoardPanel extends JPanel implements MouseListener {
