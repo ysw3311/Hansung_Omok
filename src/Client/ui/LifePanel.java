@@ -1,3 +1,5 @@
+package Client.ui;
+
 
 import java.awt.Color;
 import java.awt.Component;

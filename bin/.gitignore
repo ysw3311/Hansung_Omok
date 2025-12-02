@@ -1,11 +1,2 @@
-/ChancePanel.class
-/LifePanel.class
-/OmokClient$BoardPanel.class
-/OmokClient$ListenNetwork.class
-/OmokClient.class
-/OmokServer$Player.class
-/OmokServer.class
-/images/
-/OmokServer$ClientHandler.class
-/OmokServer$GameLogic.class
-/OmokServer$Room.class
+/Client/
+/Server/
