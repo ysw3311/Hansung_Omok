@@ -1,7 +1,9 @@
 package Server;
 
+import java.awt.Point;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /*
  * Room (금수 + 생명 + 찬스 + 기본 오목 + 멀티룸 완전 지원)
@@ -30,7 +32,10 @@ public class Room {
     // 게임판 / 금수판
     private String[][] board = new String[SIZE][SIZE];
     private boolean[][] isBan = new boolean[SIZE][SIZE];
-
+    
+    // 착수 기록을 저장할 스택 추가
+    private Stack<Point> history = new Stack<>();
+    
     // 생명(흑/백)
     private final int MAX_LIFE = 3;
     private int lifeB = MAX_LIFE;
@@ -137,13 +142,37 @@ public class Room {
         else if (msg.equals("RESET")) {
             reset();
         }
+        
+        // 무르기 관련 명령어 처리 추가
+        else if (msg.equals("CANCEL")) { // 무르기 요청
+            handleCancelRequest(p);
+        }
+        else if (msg.equals("CANCEL_YES")) { // 상대방이 수락함
+            performUndo();
+        }
+        else if (msg.equals("CANCEL_NO")) {  // 상대방이 거절함
+            handleCancelDeny(p);
+        }
+        else if (msg.startsWith("CHAT ")) {
+            handleChat(p, msg.substring(5));
+        }
 
         else if (msg.equals("END")) {
             endGame();
         }
     }
+    
+    private void handleChat(Player sender, String message) {
+        String prefix = (players.get(0) == sender) ? "[흑]" : "[백]";
+        String fullMsg = "CHAT " + prefix + " " + message;
 
+        // 방에 있는 모든 사람에게 전송
+        for (Player p : players) {
+            p.send(fullMsg);
+        }
+    }
 
+    
     // ---------------------------------------------------------
     //  돌 두기
     // ---------------------------------------------------------
@@ -170,6 +199,8 @@ public class Room {
 
         // 정상 착수
         board[r][c] = String.valueOf(color);
+        // ★ 무르기 스택에 기록 추가
+        history.push(new Point(r, c));
         broadcast("MOVE " + r + " " + c + " " + color);
 
         // 승리 처리
@@ -230,7 +261,67 @@ public class Room {
         }
     }
 
+    // 무르기 요청 처리
+    private void handleCancelRequest(Player requester) {
+        Player black = players.get(0);
+        Player white = players.get(1);
 
+        Player opponent = (requester == black) ? white : black;
+
+        opponent.send("CANCEL_ASK");
+        requester.send("CHAT [알림] 상대방에게 무르기를 요청했습니다.");
+    }
+    
+    // 무르기 거절 처리
+    private void handleCancelDeny(Player denier) {
+        Player black = players.get(0);
+        Player white = players.get(1);
+
+        Player requester = (denier == black) ? white : black;
+
+        requester.send("CANCEL_DENIED");
+    }
+    
+ // 무르기 실제 수행 (수락 시)
+    private void performUndo() {
+
+        if (history.isEmpty()) return;
+
+        // 가장 마지막 착수 위치
+        Point target = history.pop();
+        String targetColor = board[target.x][target.y];
+
+        // 돌 지우기
+        board[target.x][target.y] = null;
+
+        // 같은 색의 이전 돌 찾기
+        int prevR = -1, prevC = -1;
+
+        for (int i = history.size() - 1; i >= 0; i--) {
+            Point p = history.get(i);
+            if (board[p.x][p.y] != null && board[p.x][p.y].equals(targetColor)) {
+                prevR = p.x;
+                prevC = p.y;
+                break;
+            }
+        }
+
+        // 클라이언트에게 UNDO 명령 전송
+        broadcast("UNDO " 
+                + target.x + " " + target.y + " " 
+                + prevR + " " + prevC + " " + targetColor);
+
+        // 턴 되돌리기
+        turn = (turn == 'B') ? 'W' : 'B';
+        broadcast("TURN " + turn);
+
+        // 금수 재계산
+        updateBan();
+        sendBanAll();
+
+        broadcast("CHAT [알림] 무르기가 승인되었습니다.");
+    }
+    
     // ---------------------------------------------------------
     //  RESET (초기화)
     // ---------------------------------------------------------
@@ -297,13 +388,20 @@ public class Room {
                         isBan[r][c] = true;
     }
 
+ // 금수 전송
     private void sendBanAll() {
+        // 기존 금수 초기화
+        broadcast("BAN_CLEAR");   
 
-        for (int r = 0; r < SIZE; r++)
-            for (int c = 0; c < SIZE; c++)
-                if (isBan[r][c])
+        for (int r = 0; r < SIZE; r++) {
+            for (int c = 0; c < SIZE; c++) {
+                if (isBan[r][c]) {
                     broadcast("BAN " + r + " " + c);
+                }
+            }
+        }
     }
+
 
 
     // ---------------------------------------------------------

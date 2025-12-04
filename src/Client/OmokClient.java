@@ -50,6 +50,9 @@ public class OmokClient extends JFrame implements Network.MessageListener {
     private LifePanel lifePanel;
     private ChancePanel chancePanel;
     private JPanel sidePanel;
+    private JTextArea chatArea;
+    private JTextField chatInput;
+    private JButton chatSendBtn;
 
     // 생명, 찬스
     private int blackLives = 3, whiteLives = 3;
@@ -132,7 +135,39 @@ public class OmokClient extends JFrame implements Network.MessageListener {
         sidePanel.add(lifePanel);
         sidePanel.add(Box.createVerticalStrut(25));
         sidePanel.add(chancePanel);
+     // ========= 무르기 요청 버튼 추가 =========
+        JButton cancelBtn = new JButton("무르기 요청");
+        cancelBtn.addActionListener(e -> send("CANCEL"));
+        sidePanel.add(Box.createVerticalStrut(10));
+        sidePanel.add(cancelBtn);
+     // ======================
+        //      채팅 UI
+        // ======================
+        chatArea = new JTextArea();
+        chatArea.setEditable(false);
+        chatArea.setLineWrap(true);
+        JScrollPane scroll = new JScrollPane(chatArea);
+        scroll.setPreferredSize(new Dimension(180, 200));
 
+        chatInput = new JTextField();
+        chatSendBtn = new JButton("보내기");
+
+        chatSendBtn.addActionListener(e -> {
+        	String text = chatInput.getText().trim();
+        	if (!text.isEmpty()) {
+        		send("CHAT " + text);
+        		chatInput.setText("");
+        	}
+        });
+
+JPanel chatInputPanel = new JPanel(new BorderLayout());
+chatInputPanel.add(chatInput, BorderLayout.CENTER);
+chatInputPanel.add(chatSendBtn, BorderLayout.EAST);
+
+sidePanel.add(scroll);
+sidePanel.add(chatInputPanel);
+
+        
         // 찬스 버튼 클릭 처리
         chancePanel.addShowButtonListener(e -> {
             boolean canUse = chancePanel.newUseChance(
@@ -237,7 +272,59 @@ public class OmokClient extends JFrame implements Network.MessageListener {
                 resetBoard();
                 repaint();
                 break;
+                
+            case "CHAT":   // 서버 → 채팅 메시지
+            {
+                String msgText = msg.substring(5); // CHAT 이후
+                chatArea.append(msgText + "\n");
+                break;
+            }
+            
+            case "CANCEL_ASK":
+                int result = JOptionPane.showConfirmDialog(this,
+                        "상대방이 무르기를 요청했습니다. 수락하시겠습니까?",
+                        "무르기 요청", JOptionPane.YES_NO_OPTION);
 
+                if (result == JOptionPane.YES_OPTION) {
+                    send("CANCEL_YES");
+                } else {
+                    send("CANCEL_NO");
+                }
+                break;
+
+            case "CANCEL_DENIED":
+                JOptionPane.showMessageDialog(this, "상대방이 무르기 요청을 거절했습니다.");
+                break;
+                
+            case "BAN_CLEAR":
+                for (int i = 0; i < SIZE; i++)
+                    for (int j = 0; j < SIZE; j++)
+                        isBan[i][j] = false;
+                repaint();
+                break;
+             
+            case "UNDO":
+            {
+                int r1 = Integer.parseInt(parts[1]); // 지울 돌 r
+                int c1 = Integer.parseInt(parts[2]); // 지울 돌 c
+
+                int r2 = Integer.parseInt(parts[3]); // 상대방의 마지막 돌 r (갱신)
+                int c2 = Integer.parseInt(parts[4]); // 상대방의 마지막 돌 c
+
+                String col = parts[5]; // "B" or "W"
+
+                board[r1][c1] = null;
+
+                if (col.equals("B")) {
+                    lastRowB = r2; lastColB = c2;
+                } else {
+                    lastRowW = r2; lastColW = c2;
+                }
+
+                repaint();
+                break;
+            }
+    
             case "END": // 게임 종료
                 JOptionPane.showMessageDialog(this, "게임 종료");
                 dispose();
