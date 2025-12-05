@@ -15,10 +15,9 @@ public class LoginScreen extends JFrame {
 
     // 닉네임 입력 필드
     private JTextField nickField;
+    private String nickname; // 입력된 닉네임 저장
 
-    // ---------------------------------------
     // 로그인 화면 생성 (닉네임 입력 UI)
-    // ---------------------------------------
     public LoginScreen(Socket socket, BufferedReader in, PrintWriter out) {
 
         this.socket = socket;
@@ -48,6 +47,7 @@ public class LoginScreen extends JFrame {
         btn.addActionListener(e -> {
             String nick = nickField.getText().trim();
             if (!nick.isEmpty()) {
+                nickname = nick; // 닉네임 저장
                 out.println("NICK " + nick); // 서버에 닉네임 전달
                 out.flush();
             }
@@ -58,5 +58,10 @@ public class LoginScreen extends JFrame {
         panel.add(btn);
 
         add(panel);
+    }
+
+    // 닉네임 반환 메서드
+    public String getNickname() {
+        return nickname;
     }
 }

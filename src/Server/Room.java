@@ -108,8 +108,9 @@ public class Room {
         black.send("START B");
         white.send("START W");
 
-        black.send("TURN B");
-        white.send("TURN B");
+        // 턴 전송 시 상대방 닉네임도 함께 전송
+        black.send("TURN B " + white.getNickname());
+        white.send("TURN B " + black.getNickname());
 
         // 금수 초기화 후 전송
         updateBan();
@@ -154,7 +155,8 @@ public class Room {
             handleCancelDeny(p);
         }
         else if (msg.startsWith("CHAT ")) {
-            handleChat(p, msg.substring(5));
+            // CHAT 닉네임 메시지 형식으로 받음
+            handleChat(p, msg.substring(5)); // "CHAT " 이후 전체 전달
         }
 
         else if (msg.equals("END")) {
@@ -163,8 +165,8 @@ public class Room {
     }
     
     private void handleChat(Player sender, String message) {
-        String prefix = (players.get(0) == sender) ? "[흑]" : "[백]";
-        String fullMsg = "CHAT " + prefix + " " + message;
+        // 클라이언트에서 "닉네임 메시지" 형식으로 보냄
+        String fullMsg = "CHAT " + message;
 
         // 방에 있는 모든 사람에게 전송
         for (Player p : players) {
@@ -216,7 +218,10 @@ public class Room {
 
         // 턴 변경
         turn = (turn == 'B') ? 'W' : 'B';
-        broadcast("TURN " + turn);
+        Player black = players.get(0);
+        Player white = players.get(1);
+        black.send("TURN " + turn + " " + white.getNickname());
+        white.send("TURN " + turn + " " + black.getNickname());
     }
 
 
@@ -313,7 +318,10 @@ public class Room {
 
         // 턴 되돌리기
         turn = (turn == 'B') ? 'W' : 'B';
-        broadcast("TURN " + turn);
+        Player black = players.get(0);
+        Player white = players.get(1);
+        black.send("TURN " + turn + " " + white.getNickname());
+        white.send("TURN " + turn + " " + black.getNickname());
 
         // 금수 재계산
         updateBan();
@@ -339,7 +347,10 @@ public class Room {
         gameOver = false;
 
         broadcast("RESET");
-        broadcast("TURN B");
+        Player black = players.get(0);
+        Player white = players.get(1);
+        black.send("TURN B " + white.getNickname());
+        white.send("TURN B " + black.getNickname());
         broadcast("LIFE B " + lifeB);
         broadcast("LIFE W " + lifeW);
         broadcast("CHANCES B " + chanceB);

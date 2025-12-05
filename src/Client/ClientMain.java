@@ -10,6 +10,7 @@ public class ClientMain implements Network.MessageListener {
 
     private JFrame currentUI;      // 현재 표시 중인 화면
     private Network network;       // 서버와 통신 담당
+    private String myNickname;     // 내 닉네임 저장
 
     public ClientMain() {
 
@@ -56,12 +57,13 @@ public class ClientMain implements Network.MessageListener {
     }
 
     // 게임 화면 표시
-    private void showGame(char color) {
+    private void showGame(char color, String nickname) {
         changeUI(new OmokClient(
                 network.getSocket(),
                 network.getIn(),
                 network.getOut(),
-                color             // 내 돌 색(B/W)
+                color,            // 내 돌 색(B/W)
+                nickname          // 닉네임
         ));
     }
 
@@ -72,6 +74,10 @@ public class ClientMain implements Network.MessageListener {
         System.out.println("[CLIENT] RECV: " + msg);
 
         if (msg.startsWith("NICKOK")) { // 닉네임 등록 성공
+            // 닉네임 저장 (LoginScreen에서 입력한 값) - showLobby() 호출 전에 저장
+            if (currentUI instanceof LoginScreen loginScreen) {
+                myNickname = loginScreen.getNickname();
+            }
             showLobby();
             return;
         }
@@ -79,7 +85,7 @@ public class ClientMain implements Network.MessageListener {
         if (msg.startsWith("JOINED")) { // 방 입장 성공
             String[] sp = msg.split(" ");
             char color = sp[2].charAt(0); // B/W
-            showGame(color);
+            showGame(color, myNickname);
             return;
         }
 
