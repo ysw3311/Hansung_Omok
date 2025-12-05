@@ -100,10 +100,7 @@ public class OmokClient extends JFrame implements Network.MessageListener {
         receiveMessage(msg);
     }
 
-
-    // -----------------------------
     // 보드 좌표 계산
-    // -----------------------------
     private void initPoints() {
         for (int r = 0; r < SIZE; r++)
             for (int c = 0; c < SIZE; c++)
@@ -147,11 +144,11 @@ public class OmokClient extends JFrame implements Network.MessageListener {
         chatArea.setLineWrap(true);
 
         JScrollPane chatScroll = new JScrollPane(chatArea);
-        chatScroll.setPreferredSize(new Dimension(200, 250)); // ← 높이 약간 조정
+        chatScroll.setPreferredSize(new Dimension(200, 250));
 
         // 채팅 입력창
         chatInput = new JTextField();
-        chatInput.setPreferredSize(new Dimension(150, 25)); // ← 입력창 높이 얇게(20→25 또는 반대로 줄여도 됨)
+        chatInput.setPreferredSize(new Dimension(150, 25));
 
         // 보내기 버튼
         sendButton = new JButton("보내기");
@@ -269,7 +266,7 @@ public class OmokClient extends JFrame implements Network.MessageListener {
                 } else {
                 	lastRowW = r; lastColW = c;
                 }
-                // 방금 놓인 돌(color)이 내 색깔(isMyBlack)과 같으면 -> 내가 둔 것 -> 활성화
+                // 방금 놓인 돌(color)이 내 색깔과 같으면 -> 내가 둔 것 -> 활성화
                 // 다르면 -> 상대방이 둔 것 -> 비활성화 (이미 턴이 넘어가서 내 이전 수를 무를 수 없음)
                 if (color.equals(String.valueOf(myColor))) {
                     cancelButton.setEnabled(true);  // 내가 뒀으니 무르기 가능
@@ -479,10 +476,6 @@ public class OmokClient extends JFrame implements Network.MessageListener {
 
         @Override
         public void mouseClicked(MouseEvent e) {
-        	//if (!isAssigned) {
-                //JOptionPane.showMessageDialog(this, "아직 역할 할당 전입니다.");
-                //return;
-            //}
             if (!isMyTurn) {
                 JOptionPane.showMessageDialog(this, "지금은 당신의 턴이 아닙니다.");
                 return;
@@ -509,9 +502,9 @@ public class OmokClient extends JFrame implements Network.MessageListener {
                     }
                 }
             }
-         // 범위 밖 클릭 무시
+            // 범위 밖 클릭 무시
             if (minDist > CELL * 0.5) return;
-         // 클릭시 서버에 요청 전송 (서버가 유효성 검사 수행)
+            // 클릭시 서버에 요청 전송 (서버가 유효성 검사 수행)
             sendToServer("PLACE " + row + " " + col);
             showAll = false; // 새 돌을 두면 전체보기 해제
             }

@@ -74,7 +74,7 @@ public class ClientMain implements Network.MessageListener {
         System.out.println("[CLIENT] RECV: " + msg);
 
         if (msg.startsWith("NICKOK")) { // 닉네임 등록 성공
-            // 닉네임 저장 (LoginScreen에서 입력한 값) - showLobby() 호출 전에 저장
+            // 닉네임 저장 (LoginScreen에서 입력한 값)
             if (currentUI instanceof LoginScreen loginScreen) {
                 myNickname = loginScreen.getNickname();
             }

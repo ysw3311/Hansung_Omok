@@ -66,7 +66,7 @@ public class LifePanel extends JPanel {
             g.drawString("흑", blackTextX, blackTextY);
         }
 
-        // 2. 백 영역
+        // 백 영역
         int whiteIconX = 20;
         int whiteIconY = 90;
 
