@@ -18,9 +18,7 @@ public class ClientLobby extends JFrame implements Network.MessageListener {
     private DefaultListModel<String> roomModel;
     private JList<String> roomList;
 
-    // -------------------------------------------
     // 로비 화면 UI 생성
-    // -------------------------------------------
     public ClientLobby(Socket socket, BufferedReader in, PrintWriter out) {
 
         this.socket = socket;
@@ -94,9 +92,7 @@ public class ClientLobby extends JFrame implements Network.MessageListener {
         receiveMessage(msg);
     }
 
-    // -------------------------------------------
     // 방 만들기 요청 전송
-    // -------------------------------------------
     private void createRoom() {
         String name = JOptionPane.showInputDialog(this, "방 이름 입력", "새방");
         if (name == null) return;
@@ -114,9 +110,7 @@ public class ClientLobby extends JFrame implements Network.MessageListener {
         out.flush();
     }
 
-    // -------------------------------------------
     // 방 입장 요청 전송
-    // -------------------------------------------
     private void joinRoom() {
         String selected = roomList.getSelectedValue();
         if (selected == null) {
@@ -129,9 +123,7 @@ public class ClientLobby extends JFrame implements Network.MessageListener {
         out.flush();
     }
 
-    // -------------------------------------------
     // 서버에서 온 메시지 처리
-    // -------------------------------------------
     public void receiveMessage(String msg) {
 
         // 방 목록 갱신

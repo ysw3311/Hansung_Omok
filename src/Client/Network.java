@@ -3,13 +3,11 @@ package Client;
 import java.io.*;
 import java.net.Socket;
 
-/**
- * Network
- * - 클라이언트의 소켓 통신을 담당
- * - 서버로부터 메시지를 지속적으로 수신하여 Listener(=ClientMain)에게 전달
- */
-public class Network {
 
+ // 클라이언트의 소켓 통신을 담당
+ // 서버로부터 메시지를 지속적으로 수신하여 Listener(=ClientMain)에게 전달
+
+public class Network {
     // 서버 메시지를 전달받을 리스너 인터페이스
     public interface MessageListener {
         void onMessage(String msg);

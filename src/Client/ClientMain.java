@@ -2,7 +2,6 @@ package Client;
 
 import Client.ui.LoginScreen;
 import Client.ui.ClientLobby;
-import Client.OmokClient;
 
 import javax.swing.*;
 
@@ -13,10 +12,9 @@ public class ClientMain implements Network.MessageListener {
     private String myNickname;     // 내 닉네임 저장
 
     public ClientMain() {
-
         network = new Network(this);                    // 메시지 리스너 등록
-        boolean ok = network.connect("127.0.0.1", 9999); // 서버 연결
-
+        boolean ok = network.connect("127.0.0.1", 9999); // 서버 연결, 성공하면 true 반환
+        
         if (!ok) {
             JOptionPane.showMessageDialog(null, "서버 연결 실패!");
             System.exit(0);
@@ -33,7 +31,7 @@ public class ClientMain implements Network.MessageListener {
     private void changeUI(JFrame next) {
         if (currentUI != null) currentUI.dispose(); // 기존 화면 닫기
         currentUI = next;
-        currentUI.setVisible(true);                // 새 화면 표시
+        currentUI.setVisible(true); // 새 화면 표시
     }
 
     // 로그인 화면 표시
@@ -78,7 +76,7 @@ public class ClientMain implements Network.MessageListener {
             if (currentUI instanceof LoginScreen loginScreen) {
                 myNickname = loginScreen.getNickname();
             }
-            showLobby();
+            showLobby(); // 로비 화면으로 전환
             return;
         }
 

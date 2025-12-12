@@ -56,7 +56,7 @@ public class ChancePanel extends JPanel {
         else {
         // 백 힌트
         	for (int i = 0; i < whiteChances; i++) {
-        		g.drawImage(hintImg, 20 + i * 45, 60, hintSize, hintSize, this); // hintSize가 40이므로 높이는 100이 된다.
+        		g.drawImage(hintImg, 20 + i * 45, 60, hintSize, hintSize, this); // hintSize가 40이므로 높이는 100
         	}
         }
     }
@@ -65,24 +65,28 @@ public class ChancePanel extends JPanel {
     	this.isBlack = isBlack;
     }
     
+    //서버에서 받은 값으로 변수 초기화
     public void updateChances(boolean isBlack, int b, int w) {
         blackChances = b;
         whiteChances = w;
-        showButton.setEnabled((isBlack && b > 0) || (!isBlack && w > 0));
+        showButton.setEnabled((isBlack && b > 0) || (!isBlack && w > 0)); // 힌트를 모두 사용하면 버튼 비활성화
         repaint();
     }
 
+    // 턴 표시를 바꿔주는 함수
     public void updateTurn(String turn) {
         this.turnText = "턴: " + turn;
         repaint();
     }
 
+    // 찬스를 모두 사용했는지 확인하는 함수
     public boolean newUseChance(boolean isBlack, int blackC, int whiteC) {
         if (isBlack && blackC > 0) return true;
         if (!isBlack && whiteC > 0) return true;
         return false;
     }
     
+    // 초기화 함수
     public void resetChances() {
         blackChances = 2;
         whiteChances = 2;

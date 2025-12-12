@@ -25,7 +25,7 @@ public class LifePanel extends JPanel {
         setPreferredSize(new java.awt.Dimension(250, 150)); // 패널 크기 설정
     }
     
-    public void setOpponentNickname(String nickname) {
+    public void setOpponentNickname(String nickname) { // 상대 닉네임 설정
         this.opponentNickname = nickname;
         repaint();
     }
@@ -100,21 +100,7 @@ public class LifePanel extends JPanel {
         repaint();
     }
 
-    // 패널 내부에서 직접 감소시킬 때
-    public int decreaseLife(boolean isBlackTurn) {
-        if (isBlackTurn) {
-            if (blackLives > 0) blackLives--;
-        } else {
-            if (whiteLives > 0) whiteLives--;
-        }
-
-        repaint();
-
-        if (blackLives == 0) return 0; // 흑 패배
-        if (whiteLives == 0) return 1; // 백 패배
-        return 2; // 계속
-    }
-
+    // 생명 초기화
     public void resetLife() {
         blackLives = 3;
         whiteLives = 3;

@@ -80,24 +80,12 @@ public class OmokServer {
                 p.send("ERROR NONICK");
                 return;
             }
-
             p.setNickname(sp[1]);
             System.out.println("[SERVER] 닉네임 설정: " + p.getNickname());
-
-            // 1) 로그인 성공 신호 전송
             p.send("NICKOK");
-
-            // 2) 클라이언트가 showLobby() 실행 후
-            //    ClientMain이 ROOMLIST 요청을 보내므로
-            //    여기서는 ROOMLIST 안 보냄 (중복 문제 해결)
-
             return;
         }
-
-
-            // ===========================
             // 방 목록 요청
-            // ===========================
             case "ROOMLIST": {
                 p.send(roomManager.getRoomList());
                 return;

@@ -63,6 +63,115 @@ public class OmokClient extends JFrame implements Network.MessageListener {
     private int blackLives = 3, whiteLives = 3;
     private int blackChances = 2, whiteChances = 2;
 
+    // 내부 패널
+    class BoardPanel extends JPanel implements MouseListener {
+        public BoardPanel() {
+            addMouseListener(this);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            // 보드 이미지 확대해서 그리기
+            int w = (int) Math.round(boardImg.getWidth(null) * SCALE);
+            int h = (int) Math.round(boardImg.getHeight(null) * SCALE);
+            g.drawImage(boardImg, 0, 0, w, h, this);
+
+            
+            // 전체 돌 그리기
+            if (showAll) { // 힌트 버튼을 눌렀다면
+                // 전체 돌 표시 + 금수 표시
+                for (int i = 0; i < SIZE; i++) {
+                    for (int j = 0; j < SIZE; j++) {
+                        if ("B".equals(board[i][j])) {
+                            g.drawImage(blackStone,
+                                    points[i][j].x - STONE_SIZE / 2,
+                                    points[i][j].y - STONE_SIZE / 2,
+                                    STONE_SIZE, STONE_SIZE, this);
+                        } else if ("W".equals(board[i][j])) {
+                            g.drawImage(whiteStone,
+                                    points[i][j].x - STONE_SIZE / 2,
+                                    points[i][j].y - STONE_SIZE / 2,
+                                    STONE_SIZE, STONE_SIZE, this);
+                        }
+                        if (isBan[i][j] && board[i][j] == null) {
+                            g.drawImage(banImg,
+                                    points[i][j].x - STONE_SIZE / 2,
+                                    points[i][j].y - STONE_SIZE / 2,
+                                    STONE_SIZE, STONE_SIZE, this);
+                        }
+                    }
+                }
+            }
+            else if (lastRowB != -1 && lastColB != -1 && board[lastRowB][lastColB] != null) { // 돌이 놓였다면
+            	Image stoneb = blackStone;
+                g.drawImage(stoneb,
+                        points[lastRowB][lastColB].x - STONE_SIZE / 2,
+                        points[lastRowB][lastColB].y - STONE_SIZE / 2,
+                        STONE_SIZE, STONE_SIZE, this);
+                if(lastRowW != -1 && lastColW != -1 && board[lastRowW][lastColW] != null) {
+                	Image stonew = whiteStone;
+                    g.drawImage(stonew,
+                            points[lastRowW][lastColW].x - STONE_SIZE / 2,
+                            points[lastRowW][lastColW].y - STONE_SIZE / 2,
+                            STONE_SIZE, STONE_SIZE, this);
+                }
+                // 금수 표시
+                for (int i = 0; i < SIZE; i++) {
+                    for (int j = 0; j < SIZE; j++) {
+                    	if (isBan[i][j] && board[i][j] == null) {
+                            g.drawImage(banImg,
+                                    points[i][j].x - STONE_SIZE / 2,
+                                    points[i][j].y - STONE_SIZE / 2,
+                                    STONE_SIZE, STONE_SIZE, this);
+                        }
+                    }
+                }
+            }
+        }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            if (!isMyTurn) {
+                JOptionPane.showMessageDialog(this, "지금은 당신의 턴이 아닙니다.");
+                return;
+            }
+            
+            int mx = e.getX();
+            int my = e.getY();
+
+            // 클릭한 곳에서 가장 가까운 교차점 찾기
+            int row = 0, col = 0;
+            double minDist = Double.MAX_VALUE;
+
+            // 클릭 좌표 → 가장 가까운 좌표 찾기
+            for (int r = 0; r < SIZE; r++) { // 0행부터 비교하면서 가장 가까운곳 찾기
+                for (int c = 0; c < SIZE; c++) {
+                    double dx = mx - points[r][c].x;
+                    double dy = my - points[r][c].y;
+                    double dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < minDist) {
+                        minDist = dist;
+                        row = r; // 가장 가까운 곳의 행, 열 저장
+                        col = c;
+                    }
+                }
+            }
+            // 범위 밖 클릭 무시
+            if (minDist > CELL * 0.5) return;
+            // 클릭시 서버에 요청 전송 (서버가 유효성 검사 수행)
+            sendToServer("PLACE " + row + " " + col);
+            showAll = false; // 새 돌을 두면 전체보기 해제
+            }
+
+        public void mousePressed(MouseEvent e) {}
+        public void mouseReleased(MouseEvent e) {}
+        public void mouseEntered(MouseEvent e) {}
+        public void mouseExited(MouseEvent e) {}
+    }
+    
     // 생성자
     public OmokClient(Socket socket, BufferedReader in, PrintWriter out, char myColor, String nickname) {
 
@@ -166,10 +275,10 @@ public class OmokClient extends JFrame implements Network.MessageListener {
         chatPanel.add(inputPanel, BorderLayout.SOUTH);
         //채팅 영역 끝
         
-        // 힌트 패널 이벤트 넣기
+        // 힌트 버튼 이벤트 넣기
         chancePanel.addShowButtonListener(e -> {
         	String color;
-            if (chancePanel.newUseChance(myColor == 'B', blackChances, whiteChances)) {
+            if (chancePanel.newUseChance(myColor == 'B', blackChances, whiteChances)) { // 힌트를 모두 사용하지 않았다면
             	sendToServer("USECHANCE"); // 서버로 메시지 보내기
                 showAll = true;
                 panel.repaint(); // showAll = true인 상태로 BoardPanel의 paintComponent(g)호출 (다시 그리기)
@@ -282,7 +391,7 @@ public class OmokClient extends JFrame implements Network.MessageListener {
                 isBan[br][bc] = true;
                 repaint();
                 break;
-            case "BAN_CLEAR": // ★ [추가] 금수 초기화 명령 처리
+            case "BAN_CLEAR": // 금수 초기화 명령 처리
                 for (int i = 0; i < SIZE; i++) {
                     for (int j = 0; j < SIZE; j++) {
                         isBan[i][j] = false; // 모든 금수 해제
@@ -403,115 +512,5 @@ public class OmokClient extends JFrame implements Network.MessageListener {
         endPanel.remove(endButton); // 종료하기 버튼 제거
         sidePanel.revalidate(); //레이아웃 재계산
         repaint();
-    }
-
-
- // 내부 패널
-    class BoardPanel extends JPanel implements MouseListener {
-        public BoardPanel() {
-            addMouseListener(this);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-
-            // 보드 이미지 확대해서 그리기
-            int w = (int) Math.round(boardImg.getWidth(null) * SCALE);
-            int h = (int) Math.round(boardImg.getHeight(null) * SCALE);
-            g.drawImage(boardImg, 0, 0, w, h, this);
-
-            
-            // 전체 돌 그리기
-            if (showAll) { // 힌트 버튼을 눌렀다면
-                // 전체 돌 표시 + 금수 표시
-                for (int i = 0; i < SIZE; i++) {
-                    for (int j = 0; j < SIZE; j++) {
-                        if ("B".equals(board[i][j])) {
-                            g.drawImage(blackStone,
-                                    points[i][j].x - STONE_SIZE / 2,
-                                    points[i][j].y - STONE_SIZE / 2,
-                                    STONE_SIZE, STONE_SIZE, this);
-                        } else if ("W".equals(board[i][j])) {
-                            g.drawImage(whiteStone,
-                                    points[i][j].x - STONE_SIZE / 2,
-                                    points[i][j].y - STONE_SIZE / 2,
-                                    STONE_SIZE, STONE_SIZE, this);
-                        }
-                        if (isBan[i][j] && board[i][j] == null) {
-                            g.drawImage(banImg,
-                                    points[i][j].x - STONE_SIZE / 2,
-                                    points[i][j].y - STONE_SIZE / 2,
-                                    STONE_SIZE, STONE_SIZE, this);
-                        }
-                    }
-                }
-            }
-            else if (lastRowB != -1 && lastColB != -1 && board[lastRowB][lastColB] != null) { // 돌이 놓였다면
-            	Image stoneb = blackStone;
-                g.drawImage(stoneb,
-                        points[lastRowB][lastColB].x - STONE_SIZE / 2,
-                        points[lastRowB][lastColB].y - STONE_SIZE / 2,
-                        STONE_SIZE, STONE_SIZE, this);
-                if(lastRowW != -1 && lastColW != -1 && board[lastRowW][lastColW] != null) {
-                	Image stonew = whiteStone;
-                    g.drawImage(stonew,
-                            points[lastRowW][lastColW].x - STONE_SIZE / 2,
-                            points[lastRowW][lastColW].y - STONE_SIZE / 2,
-                            STONE_SIZE, STONE_SIZE, this);
-                }
-                // 금수 표시
-                for (int i = 0; i < SIZE; i++) {
-                    for (int j = 0; j < SIZE; j++) {
-                    	if (isBan[i][j] && board[i][j] == null) {
-                            g.drawImage(banImg,
-                                    points[i][j].x - STONE_SIZE / 2,
-                                    points[i][j].y - STONE_SIZE / 2,
-                                    STONE_SIZE, STONE_SIZE, this);
-                        }
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-            if (!isMyTurn) {
-                JOptionPane.showMessageDialog(this, "지금은 당신의 턴이 아닙니다.");
-                return;
-            }
-            
-            int mx = e.getX();
-            int my = e.getY();
-
-            // 클릭한 곳에서 가장 가까운 교차점 찾기
-            int row = 0, col = 0;
-            double minDist = Double.MAX_VALUE;
-
-            // 클릭 좌표 → 가장 가까운 좌표 찾기
-            for (int r = 0; r < SIZE; r++) { // 0행부터 비교하면서 가장 가까운곳 찾기
-                for (int c = 0; c < SIZE; c++) {
-                    double dx = mx - points[r][c].x;
-                    double dy = my - points[r][c].y;
-                    double dist = Math.sqrt(dx * dx + dy * dy);
-
-                    if (dist < minDist) {
-                        minDist = dist;
-                        row = r; // 가장 가까운 곳의 행, 열 저장
-                        col = c;
-                    }
-                }
-            }
-            // 범위 밖 클릭 무시
-            if (minDist > CELL * 0.5) return;
-            // 클릭시 서버에 요청 전송 (서버가 유효성 검사 수행)
-            sendToServer("PLACE " + row + " " + col);
-            showAll = false; // 새 돌을 두면 전체보기 해제
-            }
-
-        public void mousePressed(MouseEvent e) {}
-        public void mouseReleased(MouseEvent e) {}
-        public void mouseEntered(MouseEvent e) {}
-        public void mouseExited(MouseEvent e) {}
     }
 }
